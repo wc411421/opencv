@@ -126,6 +126,7 @@ ocl_computeOrbDescriptors(const UMat& imgbuf, const UMat& layerInfo,
 /**
  * Function that computes the Harris responses in a
  * blockSize x blockSize patch at given points in the image
+ * img保存着所有的高斯金字塔图片，layerinfo保存的是不同层在img中的位置
  */
 static void
 HarrisResponses(const Mat& img, const std::vector<Rect>& layerinfo,
@@ -146,7 +147,7 @@ HarrisResponses(const Mat& img, const std::vector<Rect>& layerinfo,
     int* ofs = ofsbuf.data();
     for( int i = 0; i < blockSize; i++ )
         for( int j = 0; j < blockSize; j++ )
-            ofs[i*blockSize + j] = (int)(i*step + j);
+            ofs[i*blockSize + j] = (int)(i*step + j);   // Harris窗口的元素相对img的偏移
 
     for( ptidx = 0; ptidx < ptsize; ptidx++ )
     {
@@ -154,13 +155,13 @@ HarrisResponses(const Mat& img, const std::vector<Rect>& layerinfo,
         int y0 = cvRound(pts[ptidx].pt.y);
         int z = pts[ptidx].octave;
 
-        const uchar* ptr0 = ptr00 + (y0 - r + layerinfo[z].y)*step + x0 - r + layerinfo[z].x;
+        const uchar* ptr0 = ptr00 + (y0 - r + layerinfo[z].y)*step + x0 - r + layerinfo[z].x;   // 第i个特征点的harris窗口的首地址
         int a = 0, b = 0, c = 0;
 
         for( int k = 0; k < blockSize*blockSize; k++ )
         {
             const uchar* ptr = ptr0 + ofs[k];
-            int Ix = (ptr[1] - ptr[-1])*2 + (ptr[-step+1] - ptr[-step-1]) + (ptr[step+1] - ptr[step-1]);
+            int Ix = (ptr[1] - ptr[-1])*2 + (ptr[-step+1] - ptr[-step-1]) + (ptr[step+1] - ptr[step-1]);    //sobel卷积，x方向
             int Iy = (ptr[step] - ptr[-step])*2 + (ptr[step-1] - ptr[-step-1]) + (ptr[step+1] - ptr[-step+1]);
             a += Ix*Ix;
             b += Iy*Iy;
